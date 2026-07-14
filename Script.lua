@@ -1,18 +1,14 @@
--- Zeta Hub v5.1 - ПОЛНЫЙ ФУНКЦИОНАЛ
+-- Zeta Hub v6.0 - КАК SPECTRUM HUB
 -- Для игры: +1 Speed Keyboard Escape
 -- Вставь в Xeno Executor и нажми Execute
 
-print("🔥 Zeta Hub v5.1 ЗАПУСК...")
+print("🔥 Zeta Hub v6.0 ЗАПУСК...")
 
-task.wait(2)
+task.wait(3)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local workspace = game:GetService("Workspace")
-local lighting = game:GetService("Lighting")
-local virtualInput = game:GetService("VirtualInputManager")
 local userInput = game:GetService("UserInputService")
-local tweenService = game:GetService("TweenService")
 
 if not player then
     print("❌ Игрок не найден!")
@@ -24,313 +20,6 @@ print("✅ Игрок: " .. player.Name)
 -- === УДАЛЯЕМ СТАРЫЙ GUI ===
 local oldGui = player.PlayerGui:FindFirstChild("ZetaHub")
 if oldGui then oldGui:Destroy() end
-local oldLoad = player.PlayerGui:FindFirstChild("LoadingScreen")
-if oldLoad then oldLoad:Destroy() end
-
--- === НАСТРОЙКИ (ВСЁ ВЫКЛЮЧЕНО) ===
-local Config = {
-    AutoClick = false,
-    AutoBuy = false,
-    AutoRestart = false,
-    AutoRebirth = false,
-    WinFarm = false,
-    AutoAdminLoot = false,
-    WinTarget = 1000000,
-    CurrentWins = 0,
-    FarmSpeed = 50,
-    BannerText = "👑ZETA HUB👑",
-    BannerEnabled = true,
-    Minimized = true,
-    Noclip = false,
-    FlyMode = false,
-    InfiniteJump = false,
-    DisableEffects = false,
-    TeleportToLastZone = false,
-    AutoWalk = false,
-    AntiAFK = false,
-    AutoEquipBest = false
-}
-
--- === БАННЕР ===
-local banner = nil
-local function updateBanner()
-    local char = player.Character
-    if not char then return end
-    if banner then pcall(function() banner:Destroy() end) banner = nil end
-    if not Config.BannerEnabled then return end
-    local head = char:FindFirstChild("Head")
-    if not head then return end
-    
-    banner = Instance.new("BillboardGui")
-    banner.Name = "ZetaBanner"
-    banner.Size = UDim2.fromOffset(400, 60)
-    banner.Adornee = head
-    banner.AlwaysOnTop = true
-    banner.StudsOffset = Vector3.new(0, 3.5, 0)
-    banner.Parent = char
-    
-    local txt = Instance.new("TextLabel")
-    txt.Size = UDim2.new(1, 0, 1, 0)
-    txt.BackgroundTransparency = 1
-    txt.Text = Config.BannerText
-    txt.TextColor3 = Color3.fromRGB(255, 0, 0)
-    txt.TextScaled = true
-    txt.Font = Enum.Font.GothamBold
-    txt.TextStrokeTransparency = 0.15
-    txt.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    txt.Parent = banner
-end
-
-player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    updateBanner()
-    if Config.Noclip then toggleNoclip(true) end
-    if Config.FlyMode then toggleFly(true) end
-    if Config.InfiniteJump then toggleInfiniteJump(true) end
-end)
-
--- === ФУНКЦИИ ===
-local function toggleNoclip(state)
-    local char = player.Character
-    if not char then return end
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = not state
-        end
-    end
-end
-
-local flyBodyVelocity = nil
-local function toggleFly(state)
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    local hum = char:FindFirstChild("Humanoid")
-    if not hum then return end
-    
-    if state then
-        hum.PlatformStand = true
-        flyBodyVelocity = Instance.new("BodyVelocity")
-        flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 100000
-        flyBodyVelocity.Velocity = Vector3.new(0, 20, 0)
-        flyBodyVelocity.Parent = hrp
-    else
-        hum.PlatformStand = false
-        if flyBodyVelocity then
-            flyBodyVelocity:Destroy()
-            flyBodyVelocity = nil
-        end
-    end
-end
-
-local function toggleInfiniteJump(state)
-    local char = player.Character
-    if not char then return end
-    local hum = char:FindFirstChild("Humanoid")
-    if not hum then return end
-    hum.JumpPower = state and 99999 or 50
-end
-
-local function toggleEffects(state)
-    if state then
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") or v:IsA("Trail") then
-                pcall(function() v.Enabled = false end)
-            end
-        end
-        lighting.GlobalShadows = false
-        lighting.Brightness = 0.5
-    else
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") or v:IsA("Trail") then
-                pcall(function() v.Enabled = true end)
-            end
-        end
-        lighting.GlobalShadows = true
-        lighting.Brightness = 2
-    end
-end
-
--- УПРАВЛЕНИЕ ПОЛЁТОМ
-userInput.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if not Config.FlyMode then return end
-    if not flyBodyVelocity then return end
-    
-    if input.KeyCode == Enum.KeyCode.W then
-        flyBodyVelocity.Velocity = Vector3.new(0, 20, 0)
-    elseif input.KeyCode == Enum.KeyCode.S then
-        flyBodyVelocity.Velocity = Vector3.new(0, -20, 0)
-    elseif input.KeyCode == Enum.KeyCode.A then
-        flyBodyVelocity.Velocity = Vector3.new(-20, 0, 0)
-    elseif input.KeyCode == Enum.KeyCode.D then
-        flyBodyVelocity.Velocity = Vector3.new(20, 0, 0)
-    end
-end)
-
--- === ПОЛУЧЕНИЕ ПОБЕД ===
-local function getWins()
-    local pg = player:FindFirstChild("PlayerGui")
-    if not pg then return 0 end
-    for _, g in pairs(pg:GetChildren()) do
-        if g:IsA("ScreenGui") then
-            for _, v in pairs(g:GetDescendants()) do
-                if v:IsA("TextLabel") or v:IsA("TextButton") then
-                    local t = v.Text or ""
-                    if t:find("Win") or t:find("Побед") or t:find("🏆") then
-                        local n = t:match("%d+[,.]?%d*")
-                        if n then
-                            local w = tonumber(n:gsub(",", ""):gsub("%.", ""))
-                            if w and w > 0 then return w end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return 0
-end
-
--- === ФАРМ ПОБЕД ===
-local function farmWins()
-    if not Config.WinFarm then return end
-    local wins = getWins()
-    Config.CurrentWins = wins
-    if wins >= Config.WinTarget then
-        print("🏆 Цель достигнута!")
-        Config.WinFarm = false
-        return
-    end
-    
-    local mouse = player:GetMouse()
-    
-    virtualInput:SendKeyEvent(true, Enum.KeyCode.Escape, false, nil)
-    task.wait(0.01)
-    virtualInput:SendKeyEvent(false, Enum.KeyCode.Escape, false, nil)
-    
-    for i = 1, 15 do
-        mouse.Button1Click()
-        task.wait(0.005)
-    end
-    
-    task.wait(0.03)
-    
-    for i = 1, 8 do
-        mouse.Button1Click()
-        task.wait(0.005)
-    end
-    
-    local pg = player:FindFirstChild("PlayerGui")
-    if pg then
-        for _, g in pairs(pg:GetChildren()) do
-            if g:IsA("ScreenGui") then
-                for _, btn in pairs(g:GetDescendants()) do
-                    if btn:IsA("TextButton") then
-                        local t = btn.Text:lower() or ""
-                        if t:find("next") or t:find("continue") or t:find("restart") or t:find("play again") or t:find("ok") or t:find("again") then
-                            pcall(function() btn:Click() end)
-                            task.wait(0.03)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
--- === ТЕЛЕПОРТЫ ===
-local function teleportToLastZone()
-    if not Config.TeleportToLastZone then return end
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    local lastZone = nil
-    local highestY = -math.huge
-    
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Color == Color3.fromRGB(255, 255, 0) then
-            if obj.Position.Y > highestY then
-                highestY = obj.Position.Y
-                lastZone = obj
-            end
-        end
-    end
-    
-    if not lastZone then
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and (obj.Name:lower():find("finish") or obj.Name:lower():find("end") or obj.Name:lower():find("goal")) then
-                if obj.Position.Y > highestY then
-                    highestY = obj.Position.Y
-                    lastZone = obj
-                end
-            end
-        end
-    end
-    
-    if lastZone then
-        hrp.CFrame = lastZone.CFrame + Vector3.new(0, 5, 0)
-        task.wait(0.1)
-        hrp.CFrame = lastZone.CFrame
-        print("📍 Телепорт к финишу!")
-    end
-end
-
-local function autoWalk()
-    if not Config.AutoWalk then return end
-    local char = player.Character
-    if not char then return end
-    local hum = char:FindFirstChild("Humanoid")
-    if not hum then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    hum:MoveTo(hrp.Position + hrp.CFrame.LookVector * 100)
-    local mouse = player:GetMouse()
-    mouse.Button1Click()
-end
-
-local antiAFKTime = 0
-local function antiAFK()
-    if not Config.AntiAFK then return end
-    local now = tick()
-    if now - antiAFKTime > 30 then
-        antiAFKTime = now
-        local char = player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then
-                hum:MoveTo(char:FindFirstChild("HumanoidRootPart").Position + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5)))
-            end
-        end
-        virtualInput:SendKeyEvent(true, Enum.KeyCode.W, false, nil)
-        task.wait(0.05)
-        virtualInput:SendKeyEvent(false, Enum.KeyCode.W, false, nil)
-    end
-end
-
-local function autoEquipBest()
-    if not Config.AutoEquipBest then return end
-    local pg = player:FindFirstChild("PlayerGui")
-    if not pg then return end
-    for _, g in pairs(pg:GetChildren()) do
-        if g:IsA("ScreenGui") then
-            for _, btn in pairs(g:GetDescendants()) do
-                if btn:IsA("TextButton") then
-                    local t = btn.Text:lower() or ""
-                    if (t:find("best") or t:find("equip") or t:find("buy") or t:find("upgrade")) and
-                       (t:find("x100") or t:find("x25") or t:find("x10") or t:find("x5")) then
-                        pcall(function() btn:Click() end)
-                        task.wait(0.1)
-                        print("⚡ Куплено лучшее улучшение!")
-                    end
-                end
-            end
-        end
-    end
-end
 
 -- === СОЗДАНИЕ GUI ===
 local gui = Instance.new("ScreenGui")
@@ -338,12 +27,12 @@ gui.Name = "ZetaHub"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- СВЁРНУТОЕ МЕНЮ
+-- === СВЁРНУТОЕ МЕНЮ ===
 local miniFrame = Instance.new("Frame")
 miniFrame.Size = UDim2.fromOffset(160, 45)
 miniFrame.Position = UDim2.new(0.5, -80, 0.9, -20)
 miniFrame.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-miniFrame.BackgroundTransparency = 0.85
+miniFrame.BackgroundTransparency = 0.3
 miniFrame.BorderSizePixel = 2
 miniFrame.BorderColor3 = Color3.fromRGB(255, 215, 0)
 miniFrame.Visible = true
@@ -353,11 +42,9 @@ local miniText = Instance.new("TextLabel")
 miniText.Size = UDim2.new(1, 0, 1, 0)
 miniText.BackgroundTransparency = 1
 miniText.Text = "ZETA HUB"
-miniText.TextColor3 = Color3.fromRGB(255, 255, 255)
+miniText.TextColor3 = Color3.fromRGB(0, 0, 0)
 miniText.TextScaled = true
 miniText.Font = Enum.Font.GothamBold
-miniText.TextStrokeTransparency = 0.3
-miniText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 miniText.Parent = miniFrame
 
 local expandBtn = Instance.new("TextButton")
@@ -366,38 +53,49 @@ expandBtn.BackgroundTransparency = 1
 expandBtn.Text = ""
 expandBtn.Parent = miniFrame
 
--- РАЗВЁРНУТОЕ МЕНЮ
+-- === ОСНОВНОЕ МЕНЮ (КАК SPECTRUM HUB) ===
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(420, 680)
-frame.Position = UDim2.new(0.5, -210, 0.5, -340)
+frame.Size = UDim2.fromOffset(450, 600)
+frame.Position = UDim2.new(0.5, -225, 0.5, -300)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-frame.BackgroundTransparency = 0.1
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.fromRGB(255, 215, 0)
-frame.ClipsDescendants = true
+frame.BackgroundTransparency = 0.05
+frame.BorderSizePixel = 0
 frame.Visible = false
 frame.Parent = gui
 
--- ЗАГОЛОВОК
+-- ЗАГОЛОВОК (как на скриншоте)
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.Size = UDim2.new(1, 0, 0, 45)
 titleBar.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 titleBar.Parent = frame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 1, 0)
+title.Size = UDim2.new(0.7, 0, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ ZETA HUB v5.1"
+title.Text = "⚡ ZETA HUB v6.0"
 title.TextColor3 = Color3.new(0, 0, 0)
 title.TextScaled = true
+title.TextXAlignment = Enum.TextXAlignment.Left
 title.Font = Enum.Font.GothamBold
 title.Parent = titleBar
+
+local subTitle = Instance.new("TextLabel")
+subTitle.Size = UDim2.new(0.7, 0, 1, 0)
+subTitle.Position = UDim2.new(0.7, 0, 0, 0)
+subTitle.BackgroundTransparency = 1
+subTitle.Text = "by xZPUHigh"
+subTitle.TextColor3 = Color3.new(0, 0, 0)
+subTitle.TextScaled = true
+subTitle.TextXAlignment = Enum.TextXAlignment.Right
+subTitle.Font = Enum.Font.Gotham
+subTitle.Parent = titleBar
 
 -- КНОПКИ УПРАВЛЕНИЯ
 local minimizeBtn = Instance.new("TextButton")
 minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
 minimizeBtn.Position = UDim2.new(1, -65, 0.5, -15)
-minimizeBtn.Text = "➕"
+minimizeBtn.Text = "➖"
 minimizeBtn.TextColor3 = Color3.new(0, 0, 0)
 minimizeBtn.TextScaled = true
 minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -417,25 +115,25 @@ closeBtn.BorderSizePixel = 0
 closeBtn.Parent = titleBar
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- СКРОЛЛ
+-- === СКРОЛЛ ===
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, 0, 1, -50)
-scroll.Position = UDim2.new(0, 0, 0, 50)
+scroll.Size = UDim2.new(1, 0, 1, -45)
+scroll.Position = UDim2.new(0, 0, 0, 45)
 scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0, 0, 0, 1050)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 900)
 scroll.ScrollBarThickness = 3
 scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 215, 0)
 scroll.Parent = frame
 
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1, 0, 0, 1050)
+content.Size = UDim2.new(1, 0, 0, 900)
 content.BackgroundTransparency = 1
 content.Parent = scroll
 
 -- === ФУНКЦИИ ===
 local function makeSection(title, y)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.9, 0, 0, 25)
+    lbl.Size = UDim2.new(0.9, 0, 0, 28)
     lbl.Position = UDim2.new(0.05, 0, 0, y)
     lbl.BackgroundTransparency = 1
     lbl.Text = title
@@ -447,10 +145,10 @@ local function makeSection(title, y)
     return lbl
 end
 
-local function makeBigButton(text, y, color)
+local function makeButton(text, y, color)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
-    btn.Position = UDim2.new(0.05, 0, 0, y)
+    btn.Size = UDim2.new(0.85, 0, 0, 32)
+    btn.Position = UDim2.new(0.075, 0, 0, y)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.TextScaled = true
@@ -462,25 +160,10 @@ local function makeBigButton(text, y, color)
     return btn
 end
 
-local function makeSmallButton(text, y, x, color)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.28, 0, 0, 30)
-    btn.Position = UDim2.new(0.05 + x * 0.34, 0, 0, y)
-    btn.Text = text
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.TextScaled = true
-    btn.Font = Enum.Font.Gotham
-    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
-    btn.BorderSizePixel = 1
-    btn.BorderColor3 = Color3.fromRGB(255, 215, 0)
-    btn.Parent = content
-    return btn
-end
-
-local function makeToggle(text, y, default, key, cb)
+local function makeToggle(text, y, default, key)
     local c = Instance.new("Frame")
-    c.Size = UDim2.new(0.9, 0, 0, 30)
-    c.Position = UDim2.new(0.05, 0, 0, y)
+    c.Size = UDim2.new(0.85, 0, 0, 32)
+    c.Position = UDim2.new(0.075, 0, 0, y)
     c.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
     c.BackgroundTransparency = 0.3
     c.BorderSizePixel = 1
@@ -514,264 +197,228 @@ local function makeToggle(text, y, default, key, cb)
         st = not st
         b.Text = st and "ON" or "OFF"
         b.BackgroundColor3 = st and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
-        Config[key] = st
-        if cb then cb(st) end
-        
-        if key == "Noclip" then toggleNoclip(st) end
-        if key == "FlyMode" then toggleFly(st) end
-        if key == "InfiniteJump" then toggleInfiniteJump(st) end
-        if key == "DisableEffects" then toggleEffects(st) end
+        if key then Config[key] = st end
     end)
     return c
 end
 
+-- === НАСТРОЙКИ ===
+local Config = {
+    AutoFarm = false,
+    AutoClick = false,
+    AutoBuy = false
+}
+
 -- === ПОСТРОЕНИЕ МЕНЮ ===
 local y = 10
 
--- ИНФО
-local infoLine1 = Instance.new("TextLabel")
-infoLine1.Size = UDim2.new(0.9, 0, 0, 20)
-infoLine1.Position = UDim2.new(0.05, 0, 0, y)
-infoLine1.BackgroundTransparency = 1
-infoLine1.Text = "🏆 Побед: 0 | Цель: 1,000,000"
-infoLine1.TextColor3 = Color3.fromRGB(200, 200, 200)
-infoLine1.TextScaled = true
-infoLine1.Font = Enum.Font.Gotham
-infoLine1.Parent = content
-y = y + 25
-
-task.spawn(function()
-    while task.wait(1) do
-        local w = getWins()
-        Config.CurrentWins = w
-        infoLine1.Text = "🏆 Побед: " .. string.format("%d", w) .. " | Цель: " .. string.format("%d", Config.WinTarget)
-    end
-end)
-
--- === ФАРМ КУБКОВ ===
-makeSection("🏆 ФАРМ КУБКОВ (WINS)", y)
+-- ЗАГОЛОВОК КАК НА СКРИНШОТЕ
+local infoText = Instance.new("TextLabel")
+infoText.Size = UDim2.new(0.9, 0, 0, 25)
+infoText.Position = UDim2.new(0.05, 0, 0, y)
+infoText.BackgroundTransparency = 1
+infoText.Text = "⚡ ZETA HUB | +1 Speed Keyboard Escape"
+infoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+infoText.TextScaled = true
+infoText.TextXAlignment = Enum.TextXAlignment.Left
+infoText.Font = Enum.Font.Gotham
+infoText.Parent = content
 y = y + 30
 
-makeToggle("🚀 Teleport to Last Zone", y, false, "TeleportToLastZone")
-y = y + 35
-makeToggle("🚶 Auto Walk", y, false, "AutoWalk")
-y = y + 35
-makeToggle("🛡️ Anti-AFK", y, false, "AntiAFK")
-y = y + 35
-makeToggle("⚡ Auto Equip Best Award", y, false, "AutoEquipBest")
-y = y + 40
-
--- MOVEMENT
-makeSection("🏃 MOVEMENT", y)
-y = y + 30
-
-makeToggle("🚪 Noclip (Сквозь стены)", y, false, "Noclip")
-y = y + 35
-makeToggle("✈️ Fly Mode (WASD)", y, false, "FlyMode")
-y = y + 35
-makeToggle("🦘 Infinite Jump", y, false, "InfiniteJump")
-y = y + 40
-
--- VISUALS
-makeSection("🎨 VISUALS", y)
-y = y + 30
-
-makeToggle("⚡ Disable Effects (FPS+)", y, false, "DisableEffects")
-y = y + 40
-
--- GAME SPEED
-makeSection("⚡ GAME SPEED (+1 KEYBOARD ESCAPE)", y)
-y = y + 30
-
-local add1000 = makeBigButton("Add +1000 Game Speed", y, Color3.fromRGB(0, 100, 200))
-y = y + 45
-local add10000 = makeBigButton("Add +10000 Game Speed", y, Color3.fromRGB(0, 150, 200))
-y = y + 45
-
-add1000.MouseButton1Click:Connect(function()
-    Config.WinTarget = Config.WinTarget + 1000
-    print("🎯 +1000 к цели! Цель: " .. Config.WinTarget)
-end)
-
-add10000.MouseButton1Click:Connect(function()
-    Config.WinTarget = Config.WinTarget + 10000
-    print("🎯 +10000 к цели! Цель: " .. Config.WinTarget)
-end)
-
--- NO KEY
-makeSection("🔑 NO KEY", y)
-y = y + 30
-
-makeToggle("🖱️ Auto Click", y, false, "AutoClick")
-y = y + 35
-makeToggle("🛒 Auto Buy", y, false, "AutoBuy")
-y = y + 35
-makeToggle("🔄 Auto Restart", y, false, "AutoRestart")
-y = y + 35
-makeToggle("♻️ Auto Rebirth", y, false, "AutoRebirth")
-y = y + 35
-makeToggle("🏆 Фарм побед", y, false, "WinFarm")
-y = y + 40
-
--- WINS & STAGES
-makeSection("🏆 WINS & STAGES", y)
-y = y + 30
-
-local tpWin = makeBigButton("TP TO WIN + UNLOCK GAMEPASS", y, Color3.fromRGB(200, 100, 0))
-y = y + 45
-
-tpWin.MouseButton1Click:Connect(function()
-    local pg = player:FindFirstChild("PlayerGui")
-    if pg then
-        for _, g in pairs(pg:GetChildren()) do
-            if g:IsA("ScreenGui") then
-                for _, btn in pairs(g:GetDescendants()) do
-                    if btn:IsA("TextButton") then
-                        local t = btn.Text:lower() or ""
-                        if t:find("win") or t:find("claim") or t:find("collect") or t:find("get") then
-                            pcall(function() btn:Click() end)
-                            task.wait(0.2)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    print("🏆 Попытка собрать победы!")
-end)
-
--- Teleport
-makeSection("📡 Teleport", y)
-y = y + 30
-
-local tpNearest = makeBigButton("TP to Nearest Win Pad", y, Color3.fromRGB(0, 150, 200))
-y = y + 45
-
-tpNearest.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    local best = nil
-    local bestDist = math.huge
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Color == Color3.fromRGB(255, 255, 0) then
-            local dist = (hrp.Position - obj.Position).Magnitude
-            if dist < bestDist and dist < 200 then
-                bestDist = dist
-                best = obj
-            end
-        end
-    end
-    if best then
-        hrp.CFrame = best.CFrame + Vector3.new(0, 3, 0)
-        task.wait(0.1)
-        hrp.CFrame = best.CFrame
-        print("📍 Телепорт к победе!")
-    else
-        print("❌ Победа не найдена!")
-    end
-end)
-
--- Movement
-makeSection("🏃 Movement", y)
-y = y + 30
-
-local tpForwardBtn = makeBigButton("TP Forward (+50 studs)", y, Color3.fromRGB(100, 200, 50))
-y = y + 45
-
-tpForwardBtn.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 50
-    print("📍 Вперёд на 50 студий!")
-end)
-
--- Speed Farm
-makeSection("⚡ Speed Farm", y)
-y = y + 30
-
-makeToggle("💰 Auto Admin Loot TP", y, false, "AutoAdminLoot")
-y = y + 35
-
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0.35, 0, 0, 25)
-speedLabel.Position = UDim2.new(0.05, 0, 0, y)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "⚡ Speed Modifier:"
-speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedLabel.TextScaled = true
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.Parent = content
-
-local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(0.4, 0, 0, 25)
-speedBox.Position = UDim2.new(0.45, 0, 0, y)
-speedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-speedBox.BackgroundTransparency = 0.5
-speedBox.BorderSizePixel = 1
-speedBox.BorderColor3 = Color3.fromRGB(255, 215, 0)
-speedBox.Text = "50"
-speedBox.TextColor3 = Color3.new(1, 1, 1)
-speedBox.TextScaled = true
-speedBox.Font = Enum.Font.Gotham
-speedBox.Parent = content
-
-speedBox.FocusLost:Connect(function()
-    local n = tonumber(speedBox.Text)
-    if n and n >= 1 and n <= 450 then Config.FarmSpeed = n end
-end)
+-- General Tabs
+makeSection("📋 GENERAL TABS", y)
 y = y + 33
 
-local speedBtns = {"1","10","25","50","100","150","250","450"}
-for i, v in pairs(speedBtns) do
-    local btn = makeSmallButton(v, y, (i-1)%3, Color3.fromRGB(50, 80, 120))
-    btn.MouseButton1Click:Connect(function()
-        Config.FarmSpeed = tonumber(v)
-        speedBox.Text = v
-        local char = player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then
-                hum.WalkSpeed = tonumber(v) + 16
-            end
-        end
-    end)
-    if i % 3 == 0 then y = y + 35 end
-end
-if #speedBtns % 3 ~= 0 then y = y + 35 end
-
--- VIP
-makeSection("👑 VIP", y)
-y = y + 30
-
-local vipBtn = makeBigButton("🌟 VIP BOOST (x2 Speed)", y, Color3.fromRGB(200, 100, 255))
+makeToggle("🤖 Autofarm", y, false, "AutoFarm")
+y = y + 37
+makeToggle("🖱️ Auto Click", y, false, "AutoClick")
+y = y + 37
+makeToggle("🛒 Auto Buy", y, false, "AutoBuy")
+y = y + 37
+makeButton("🗺️ Teleport", y, Color3.fromRGB(0, 150, 200))
+y = y + 37
+makeButton("🏃 Movement", y, Color3.fromRGB(100, 200, 50))
+y = y + 37
+makeButton("👑 VIP", y, Color3.fromRGB(200, 100, 255))
 y = y + 45
 
-vipBtn.MouseButton1Click:Connect(function()
-    Config.FarmSpeed = Config.FarmSpeed * 2
-    if Config.FarmSpeed > 450 then Config.FarmSpeed = 450 end
-    speedBox.Text = tostring(Config.FarmSpeed)
-    print("👑 VIP Boost активирован! Скорость: " .. Config.FarmSpeed)
-end)
+-- Trade Features (как на скриншоте)
+makeSection("📦 TRADE FEATURES", y)
+y = y + 33
 
--- TP to Stage
-makeSection("📍 TP to Stage", y)
+local tradeInfo = Instance.new("TextLabel")
+tradeInfo.Size = UDim2.new(0.85, 0, 0, 22)
+tradeInfo.Position = UDim2.new(0.075, 0, 0, y)
+tradeInfo.BackgroundTransparency = 1
+tradeInfo.Text = "Trade Information:"
+tradeInfo.TextColor3 = Color3.fromRGB(200, 200, 200)
+tradeInfo.TextScaled = true
+tradeInfo.TextXAlignment = Enum.TextXAlignment.Left
+tradeInfo.Font = Enum.Font.Gotham
+tradeInfo.Parent = content
+y = y + 25
+
+local tradeInfo2 = Instance.new("TextLabel")
+tradeInfo2.Size = UDim2.new(0.85, 0, 0, 20)
+tradeInfo2.Position = UDim2.new(0.075, 0, 0, y)
+tradeInfo2.BackgroundTransparency = 1
+tradeInfo2.Text = "1. Add materials into the trade window."
+tradeInfo2.TextColor3 = Color3.fromRGB(150, 150, 150)
+tradeInfo2.TextScaled = true
+tradeInfo2.TextXAlignment = Enum.TextXAlignment.Left
+tradeInfo2.Font = Enum.Font.Gotham
+tradeInfo2.Parent = content
+y = y + 22
+
+local tradeInfo3 = Instance.new("TextLabel")
+tradeInfo3.Size = UDim2.new(0.85, 0, 0, 20)
+tradeInfo3.Position = UDim2.new(0.075, 0, 0, y)
+tradeInfo3.BackgroundTransparency = 1
+tradeInfo3.Text = "2. Select a preset then click 'Add Trade Items'."
+tradeInfo3.TextColor3 = Color3.fromRGB(150, 150, 150)
+tradeInfo3.TextScaled = true
+tradeInfo3.TextXAlignment = Enum.TextXAlignment.Left
+tradeInfo3.Font = Enum.Font.Gotham
+tradeInfo3.Parent = content
 y = y + 30
 
-local stages = {"Stage 2", "Stage 5", "Stage 10", "Stage 15", "Stage 20"}
-for i, v in pairs(stages) do
-    local btn = makeSmallButton(v, y, (i-1)%3, Color3.fromRGB(80, 50, 120))
-    btn.MouseButton1Click:Connect(function()
-        print("📍 Телепорт на " .. v)
-        local pg = player:FindFirstChild("PlayerGui")
-        if pg then
-            for _, g in pairs(pg:GetChildren()) do
-                if g:IsA("ScreenGui") then
-                    for _, btn2 in pairs(g:GetDescendants()) do
-                        if btn2:IsA("TextButton") then
-                            local t =
+makeSection("📦 SELECT ITEMS", y)
+y = y + 33
+
+makeButton("Choose items preset to add items into trade window.", y, Color3.fromRGB(80, 50, 150))
+y = y + 40
+
+makeSection("🔢 COUNT MULTIPLIER", y)
+y = y + 33
+
+local multLabel = Instance.new("TextLabel")
+multLabel.Size = UDim2.new(0.5, 0, 0, 25)
+multLabel.Position = UDim2.new(0.075, 0, 0, y)
+multLabel.BackgroundTransparency = 1
+multLabel.Text = "item amounts by this"
+multLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+multLabel.TextScaled = true
+multLabel.TextXAlignment = Enum.TextXAlignment.Left
+multLabel.Font = Enum.Font.Gotham
+multLabel.Parent = content
+
+local multBox = Instance.new("TextBox")
+multBox.Size = UDim2.new(0.2, 0, 0, 25)
+multBox.Position = UDim2.new(0.6, 0, 0, y)
+multBox.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+multBox.BackgroundTransparency = 0.5
+multBox.BorderSizePixel = 1
+multBox.BorderColor3 = Color3.fromRGB(255, 215, 0)
+multBox.Text = "1"
+multBox.TextColor3 = Color3.new(1, 1, 1)
+multBox.TextScaled = true
+multBox.Font = Enum.Font.Gotham
+multBox.Parent = content
+y = y + 35
+
+makeButton("Default: 1", y, Color3.fromRGB(50, 50, 80))
+y = y + 45
+
+-- ФУТЕР (как на скриншоте)
+local footer = Instance.new("TextLabel")
+footer.Size = UDim2.new(0.9, 0, 0, 25)
+footer.Position = UDim2.new(0.05, 0, 0, y)
+footer.BackgroundTransparency = 1
+footer.Text = 'print("Welcome To Zeta Hub!")'
+footer.TextColor3 = Color3.fromRGB(100, 200, 255)
+footer.TextScaled = true
+footer.Font = Enum.Font.Gotham
+footer.Parent = content
+y = y + 28
+
+local footer2 = Instance.new("TextLabel")
+footer2.Size = UDim2.new(0.9, 0, 0, 25)
+footer2.Position = UDim2.new(0.05, 0, 0, y)
+footer2.BackgroundTransparency = 1
+footer2.Text = 'echo "Last Updated 26/03/26"'
+footer2.TextColor3 = Color3.fromRGB(100, 200, 150)
+footer2.TextScaled = true
+footer2.Font = Enum.Font.Gotham
+footer2.Parent = content
+y = y + 35
+
+-- СТАТУС
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(0.9, 0, 0, 22)
+status.Position = UDim2.new(0.05, 0, 0, y + 5)
+status.BackgroundTransparency = 1
+status.Text = "✅ Zeta Hub v6.0 | Готов к работе!"
+status.TextColor3 = Color3.fromRGB(150, 255, 150)
+status.TextScaled = true
+status.Font = Enum.Font.Gotham
+status.Parent = content
+
+-- === ПЕРЕТАСКИВАНИЕ ===
+local dragStart, startPos, dragging = nil, nil, false
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+userInput.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- === ПЕРЕТАСКИВАНИЕ СВЁРНУТОГО ===
+local miniDragStart, miniStartPos, miniDragging = nil, nil, false
+miniFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        miniDragging = true
+        miniDragStart = input.Position
+        miniStartPos = miniFrame.Position
+    end
+end)
+miniFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        miniDragging = false
+    end
+end)
+userInput.InputChanged:Connect(function(input)
+    if miniDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - miniDragStart
+        miniFrame.Position = UDim2.new(miniStartPos.X.Scale, miniStartPos.X.Offset + delta.X, miniStartPos.Y.Scale, miniStartPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- === СВЕРТЫВАНИЕ/РАЗВЕРТЫВАНИЕ ===
+local function toggleMinimize()
+    if frame.Visible then
+        frame.Visible = false
+        miniFrame.Visible = true
+        minimizeBtn.Text = "➕"
+    else
+        frame.Visible = true
+        miniFrame.Visible = false
+        minimizeBtn.Text = "➖"
+    end
+end
+
+minimizeBtn.MouseButton1Click:Connect(toggleMinimize)
+expandBtn.MouseButton1Click:Connect(toggleMinimize)
+
+-- === ГОРЯЧИЕ КЛАВИШИ ===
+userInput.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.F1 then 
+        gui.Enabled = not gui.Enabled 
+    end
+end)
+
+print("✅ Zeta Hub v6.0 ЗАГРУЖЕН!")
+print("📌 F1 - Показать/Скрыть")
+print("📌 Нажми ➖ чтобы свернуть")
