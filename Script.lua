@@ -1,3 +1,5 @@
+-- Zeta Hub v5.1 - ЭКРАН ЗАГРУЗКИ + МЕНЮ
+-- Вставь в Xeno Executor и нажми Execute
 
 print("🔥 Zeta Hub v5.1 ЗАПУСК...")
 
@@ -19,7 +21,11 @@ print("✅ Игрок: " .. player.Name)
 local oldGui = player.PlayerGui:FindFirstChild("ZetaHub")
 if oldGui then
     oldGui:Destroy()
-    print("🔄 Старое меню удалено")
+end
+
+local oldLoad = player.PlayerGui:FindFirstChild("LoadingScreen")
+if oldLoad then
+    oldLoad:Destroy()
 end
 
 -- === ЭКРАН ЗАГРУЗКИ ===
@@ -34,7 +40,7 @@ loadBg.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 loadBg.BackgroundTransparency = 0.95
 loadBg.Parent = loadGui
 
--- ЗВЁЗДЫ НА ФОНЕ
+-- ЗВЁЗДЫ
 for i = 1, 30 do
     local star = Instance.new("Frame")
     star.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
@@ -42,7 +48,6 @@ for i = 1, 30 do
     star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     star.BackgroundTransparency = math.random(30, 80) / 100
     star.Parent = loadBg
-    
     task.spawn(function()
         while loadGui.Parent do
             star.BackgroundTransparency = math.random(30, 90) / 100
@@ -58,7 +63,6 @@ logo.Position = UDim2.new(0.5, -150, 0.5, -100)
 logo.BackgroundTransparency = 1
 logo.Parent = loadGui
 
--- ИКОНКА
 local icon = Instance.new("TextLabel")
 icon.Size = UDim2.new(1, 0, 0, 60)
 icon.Position = UDim2.new(0, 0, 0, 20)
@@ -69,7 +73,6 @@ icon.TextScaled = true
 icon.Font = Enum.Font.GothamBold
 icon.Parent = logo
 
--- НАЗВАНИЕ
 local loadTitle = Instance.new("TextLabel")
 loadTitle.Size = UDim2.new(1, 0, 0, 60)
 loadTitle.Position = UDim2.new(0, 0, 0, 80)
@@ -82,17 +85,13 @@ loadTitle.TextStrokeTransparency = 0.2
 loadTitle.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 loadTitle.Parent = logo
 
--- АНИМАЦИЯ ЛОГО
 task.spawn(function()
     while loadGui.Parent do
-        local scale = 1 + math.sin(tick() * 2) * 0.03
-        loadTitle.TextScaled = true
         loadTitle.Size = UDim2.new(1, 0, 0, 60 + math.sin(tick() * 2) * 3)
         task.wait(0.05)
     end
 end)
 
--- ВЕРСИЯ
 local versionText = Instance.new("TextLabel")
 versionText.Size = UDim2.new(1, 0, 0, 25)
 versionText.Position = UDim2.new(0, 0, 0, 145)
@@ -103,7 +102,6 @@ versionText.TextScaled = true
 versionText.Font = Enum.Font.Gotham
 versionText.Parent = logo
 
--- ПРОГРЕСС-БАР
 local progressBg = Instance.new("Frame")
 progressBg.Size = UDim2.fromOffset(250, 6)
 progressBg.Position = UDim2.new(0.5, -125, 0, 180)
@@ -117,38 +115,8 @@ progressBar.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 progressBar.BorderSizePixel = 0
 progressBar.Parent = progressBg
 
--- === ИМИТАЦИЯ ЗАГРУЗКИ ===
-local function loadAnimation()
-    local steps = 10
-    for i = 1, steps do
-        local progress = i / steps
-        local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local tween = tweenService:Create(progressBar, tweenInfo, {Size = UDim2.fromOffset(250 * progress, 6)})
-        tween:Play()
-        versionText.Text = "v5.1 | Загрузка " .. math.floor(progress * 100) .. "%"
-        task.wait(0.15)
-    end
-    
-    versionText.Text = "✅ Готово!"
-    task.wait(0.3)
-end
-
--- === ЗАПУСКАЕМ ЗАГРУЗКУ ===
-task.spawn(function()
-    loadAnimation()
-    
-    -- Анимация исчезновения
-    local fadeOut = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = tweenService:Create(loadGui, fadeOut, {BackgroundTransparency = 1})
-    tween:Play()
-    task.wait(0.5)
-    
-    loadGui:Destroy()
-    createMainMenu()
-end)
-
--- === ОСНОВНОЕ МЕНЮ ===
-function createMainMenu()
+-- === ФУНКЦИЯ СОЗДАНИЯ МЕНЮ ===
+local function createMainMenu()
     print("📦 Создаю меню...")
 
     -- === НАСТРОЙКИ ===
@@ -167,7 +135,7 @@ function createMainMenu()
     miniFrame.Size = UDim2.fromOffset(160, 45)
     miniFrame.Position = UDim2.new(0.5, -80, 0.9, -20)
     miniFrame.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-    miniFrame.BackgroundTransparency = 0.85
+    miniFrame.BackgroundTransparency = 0.3
     miniFrame.BorderSizePixel = 2
     miniFrame.BorderColor3 = Color3.fromRGB(255, 215, 0)
     miniFrame.Visible = true
@@ -177,11 +145,9 @@ function createMainMenu()
     miniText.Size = UDim2.new(1, 0, 1, 0)
     miniText.BackgroundTransparency = 1
     miniText.Text = "ZETA HUB"
-    miniText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    miniText.TextColor3 = Color3.fromRGB(0, 0, 0)
     miniText.TextScaled = true
     miniText.Font = Enum.Font.GothamBold
-    miniText.TextStrokeTransparency = 0.3
-    miniText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     miniText.Parent = miniFrame
 
     local expandBtn = Instance.new("TextButton")
@@ -201,12 +167,6 @@ function createMainMenu()
     frame.ClipsDescendants = true
     frame.Visible = false
     frame.Parent = gui
-
-    -- АНИМАЦИЯ ПОЯВЛЕНИЯ МЕНЮ
-    frame.Size = UDim2.fromOffset(0, 0)
-    local appearTween = TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    local tw = tweenService:Create(frame, appearTween, {Size = UDim2.fromOffset(400, 500)})
-    tw:Play()
 
     -- ЗАГОЛОВОК
     local titleBar = Instance.new("Frame")
@@ -316,7 +276,6 @@ function createMainMenu()
     local btn3 = makeButton("Auto Buy", y, Color3.fromRGB(150, 100, 0))
     y = y + 40
 
-    -- Trade Features
     makeSection("Trade Features", y)
     y = y + 30
 
@@ -426,8 +385,6 @@ function createMainMenu()
     footer2.Font = Enum.Font.Gotham
     footer2.Parent = frame
 
-    print("📦 Меню построено")
-
     -- === ПЕРЕТАСКИВАНИЕ ===
     local dragStart, startPos, dragging = nil, nil, false
     frame.InputBegan:Connect(function(input)
@@ -522,5 +479,30 @@ function createMainMenu()
 
     print("✅ Zeta Hub v5.1 ЗАГРУЖЕН!")
     print("📌 F1 - Показать/Скрыть")
-    print("📌 Нажми ➖ чтобы свернуть (как Pulse Hub)")
+    print("📌 Нажми ➖ чтобы свернуть")
 end
+
+-- === ЗАПУСКАЕМ ЗАГРУЗКУ ===
+task.spawn(function()
+    -- Анимация загрузки
+    for i = 1, 10 do
+        local progress = i / 10
+        progressBar.Size = UDim2.fromOffset(250 * progress, 6)
+        versionText.Text = "v5.1 | Загрузка " .. math.floor(progress * 100) .. "%"
+        task.wait(0.15)
+    end
+    
+    versionText.Text = "✅ Готово!"
+    task.wait(0.3)
+    
+    -- Исчезновение
+    local fadeOut = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = tweenService:Create(loadGui, fadeOut, {BackgroundTransparency = 1})
+    tween:Play()
+    task.wait(0.5)
+    
+    loadGui:Destroy()
+    createMainMenu()
+end)
+
+print("📌 Загрузка запущена...")
