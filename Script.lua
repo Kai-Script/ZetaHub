@@ -562,3 +562,216 @@ makeToggle("⚡ Auto Equip Best Award", y, false, "AutoEquipBest")
 y = y + 40
 
 -- MOVEMENT
+makeSection("🏃 MOVEMENT", y)
+y = y + 30
+
+makeToggle("🚪 Noclip (Сквозь стены)", y, false, "Noclip")
+y = y + 35
+makeToggle("✈️ Fly Mode (WASD)", y, false, "FlyMode")
+y = y + 35
+makeToggle("🦘 Infinite Jump", y, false, "InfiniteJump")
+y = y + 40
+
+-- VISUALS
+makeSection("🎨 VISUALS", y)
+y = y + 30
+
+makeToggle("⚡ Disable Effects (FPS+)", y, false, "DisableEffects")
+y = y + 40
+
+-- GAME SPEED
+makeSection("⚡ GAME SPEED (+1 KEYBOARD ESCAPE)", y)
+y = y + 30
+
+local add1000 = makeBigButton("Add +1000 Game Speed", y, Color3.fromRGB(0, 100, 200))
+y = y + 45
+local add10000 = makeBigButton("Add +10000 Game Speed", y, Color3.fromRGB(0, 150, 200))
+y = y + 45
+
+add1000.MouseButton1Click:Connect(function()
+    Config.WinTarget = Config.WinTarget + 1000
+    print("🎯 +1000 к цели! Цель: " .. Config.WinTarget)
+end)
+
+add10000.MouseButton1Click:Connect(function()
+    Config.WinTarget = Config.WinTarget + 10000
+    print("🎯 +10000 к цели! Цель: " .. Config.WinTarget)
+end)
+
+-- NO KEY
+makeSection("🔑 NO KEY", y)
+y = y + 30
+
+makeToggle("🖱️ Auto Click", y, false, "AutoClick")
+y = y + 35
+makeToggle("🛒 Auto Buy", y, false, "AutoBuy")
+y = y + 35
+makeToggle("🔄 Auto Restart", y, false, "AutoRestart")
+y = y + 35
+makeToggle("♻️ Auto Rebirth", y, false, "AutoRebirth")
+y = y + 35
+makeToggle("🏆 Фарм побед", y, false, "WinFarm")
+y = y + 40
+
+-- WINS & STAGES
+makeSection("🏆 WINS & STAGES", y)
+y = y + 30
+
+local tpWin = makeBigButton("TP TO WIN + UNLOCK GAMEPASS", y, Color3.fromRGB(200, 100, 0))
+y = y + 45
+
+tpWin.MouseButton1Click:Connect(function()
+    local pg = player:FindFirstChild("PlayerGui")
+    if pg then
+        for _, g in pairs(pg:GetChildren()) do
+            if g:IsA("ScreenGui") then
+                for _, btn in pairs(g:GetDescendants()) do
+                    if btn:IsA("TextButton") then
+                        local t = btn.Text:lower() or ""
+                        if t:find("win") or t:find("claim") or t:find("collect") or t:find("get") then
+                            pcall(function() btn:Click() end)
+                            task.wait(0.2)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    print("🏆 Попытка собрать победы!")
+end)
+
+-- Teleport
+makeSection("📡 Teleport", y)
+y = y + 30
+
+local tpNearest = makeBigButton("TP to Nearest Win Pad", y, Color3.fromRGB(0, 150, 200))
+y = y + 45
+
+tpNearest.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local best = nil
+    local bestDist = math.huge
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Color == Color3.fromRGB(255, 255, 0) then
+            local dist = (hrp.Position - obj.Position).Magnitude
+            if dist < bestDist and dist < 200 then
+                bestDist = dist
+                best = obj
+            end
+        end
+    end
+    if best then
+        hrp.CFrame = best.CFrame + Vector3.new(0, 3, 0)
+        task.wait(0.1)
+        hrp.CFrame = best.CFrame
+        print("📍 Телепорт к победе!")
+    else
+        print("❌ Победа не найдена!")
+    end
+end)
+
+-- Movement
+makeSection("🏃 Movement", y)
+y = y + 30
+
+local tpForwardBtn = makeBigButton("TP Forward (+50 studs)", y, Color3.fromRGB(100, 200, 50))
+y = y + 45
+
+tpForwardBtn.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 50
+    print("📍 Вперёд на 50 студий!")
+end)
+
+-- Speed Farm
+makeSection("⚡ Speed Farm", y)
+y = y + 30
+
+makeToggle("💰 Auto Admin Loot TP", y, false, "AutoAdminLoot")
+y = y + 35
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.35, 0, 0, 25)
+speedLabel.Position = UDim2.new(0.05, 0, 0, y)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "⚡ Speed Modifier:"
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.TextScaled = true
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.Parent = content
+
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(0.4, 0, 0, 25)
+speedBox.Position = UDim2.new(0.45, 0, 0, y)
+speedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+speedBox.BackgroundTransparency = 0.5
+speedBox.BorderSizePixel = 1
+speedBox.BorderColor3 = Color3.fromRGB(255, 215, 0)
+speedBox.Text = "50"
+speedBox.TextColor3 = Color3.new(1, 1, 1)
+speedBox.TextScaled = true
+speedBox.Font = Enum.Font.Gotham
+speedBox.Parent = content
+
+speedBox.FocusLost:Connect(function()
+    local n = tonumber(speedBox.Text)
+    if n and n >= 1 and n <= 450 then Config.FarmSpeed = n end
+end)
+y = y + 33
+
+local speedBtns = {"1","10","25","50","100","150","250","450"}
+for i, v in pairs(speedBtns) do
+    local btn = makeSmallButton(v, y, (i-1)%3, Color3.fromRGB(50, 80, 120))
+    btn.MouseButton1Click:Connect(function()
+        Config.FarmSpeed = tonumber(v)
+        speedBox.Text = v
+        local char = player.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then
+                hum.WalkSpeed = tonumber(v) + 16
+            end
+        end
+    end)
+    if i % 3 == 0 then y = y + 35 end
+end
+if #speedBtns % 3 ~= 0 then y = y + 35 end
+
+-- VIP
+makeSection("👑 VIP", y)
+y = y + 30
+
+local vipBtn = makeBigButton("🌟 VIP BOOST (x2 Speed)", y, Color3.fromRGB(200, 100, 255))
+y = y + 45
+
+vipBtn.MouseButton1Click:Connect(function()
+    Config.FarmSpeed = Config.FarmSpeed * 2
+    if Config.FarmSpeed > 450 then Config.FarmSpeed = 450 end
+    speedBox.Text = tostring(Config.FarmSpeed)
+    print("👑 VIP Boost активирован! Скорость: " .. Config.FarmSpeed)
+end)
+
+-- TP to Stage
+makeSection("📍 TP to Stage", y)
+y = y + 30
+
+local stages = {"Stage 2", "Stage 5", "Stage 10", "Stage 15", "Stage 20"}
+for i, v in pairs(stages) do
+    local btn = makeSmallButton(v, y, (i-1)%3, Color3.fromRGB(80, 50, 120))
+    btn.MouseButton1Click:Connect(function()
+        print("📍 Телепорт на " .. v)
+        local pg = player:FindFirstChild("PlayerGui")
+        if pg then
+            for _, g in pairs(pg:GetChildren()) do
+                if g:IsA("ScreenGui") then
+                    for _, btn2 in pairs(g:GetDescendants()) do
+                        if btn2:IsA("TextButton") then
+                            local t =
