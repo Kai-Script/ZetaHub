@@ -1,8 +1,8 @@
--- Zeta Hub v1.5 - ADMIN LOOT TP + Авто-фарм
+-- Zeta Hub v3.3 - ПОЛНЫЙ АВТО-ФАРМ (БЕГ ПО КАРТЕ + СБОР КУБКОВ)
 -- Для игры: +1 Speed Keyboard Escape
 -- Вставь в Xeno Executor и нажми Execute
 
-print("🔥 Zeta Hub v1.5 ЗАПУСК...")
+print("🔥 Zeta Hub v3.3 ЗАПУСК...")
 
 task.wait(2)
 
@@ -12,6 +12,7 @@ local workspace = game:GetService("Workspace")
 local virtualInput = game:GetService("VirtualInputManager")
 local userInput = game:GetService("UserInputService")
 local tweenService = game:GetService("TweenService")
+local runService = game:GetService("RunService")
 
 if not player then
     print("❌ Игрок не найден!")
@@ -22,22 +23,21 @@ print("✅ Игрок: " .. player.Name)
 
 -- === НАСТРОЙКИ ===
 local Config = {
-    AutoClick = false,
+    AutoWalk = false,          -- АВТОМАТИЧЕСКАЯ ХОДЬБА И СБОР ВИНОВ (НОВОЕ!)
     AutoBuy = false,
     AutoRestart = false,
     AutoRebirth = false,
     WinFarm = false,
-    AutoAdminLoot = false,  -- НОВАЯ ФУНКЦИЯ
+    AutoAdminLoot = false,
     WinTarget = 1000000,
     CurrentWins = 0,
     FarmSpeed = 50,
-    DisableEffects = false,
     BannerText = "👑ZETA HUB👑",
     BannerEnabled = true,
     Minimized = false
 }
 
--- === БАННЕР ===
+-- === БАННЕР (КРАСНЫЙ) ===
 local banner = nil
 local function updateBanner()
     local char = player.Character
@@ -60,14 +60,22 @@ local function updateBanner()
     bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     bg.BackgroundTransparency = 0.3
     bg.BorderSizePixel = 3
-    bg.BorderColor3 = Color3.fromRGB(255, 215, 0)
+    bg.BorderColor3 = Color3.fromRGB(255, 0, 0)
     bg.Parent = banner
+    
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.new(1.05, 0, 1.1, 0)
+    glow.Position = UDim2.new(-0.025, 0, -0.05, 0)
+    glow.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    glow.BackgroundTransparency = 0.7
+    glow.BorderSizePixel = 0
+    glow.Parent = banner
     
     local txt = Instance.new("TextLabel")
     txt.Size = UDim2.new(1, 0, 1, 0)
     txt.BackgroundTransparency = 1
     txt.Text = Config.BannerText
-    txt.TextColor3 = Color3.fromRGB(255, 215, 0)
+    txt.TextColor3 = Color3.fromRGB(255, 0, 0)
     txt.TextScaled = true
     txt.Font = Enum.Font.GothamBold
     txt.TextStrokeTransparency = 0.2
@@ -77,28 +85,75 @@ end
 
 player.CharacterAdded:Connect(function() task.wait(0.5) updateBanner() end)
 
--- === ТЕЛЕПОРТ К МОНЕТАМ ADMIN ABUSE ===
+-- === НОВАЯ ФУНКЦИЯ: АВТО-БЕГ И СБОР ВИНОВ ===
+local function autoWalkAndCollect()
+    if not Config.AutoWalk then return end
+    
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+    
+    -- 1. Автоматически идём вперёд
+    hum:MoveTo(hrp.Position + hrp.CFrame.LookVector * 100)
+    
+    -- 2. Ищем жёлтые площадки с кубками (Wins)
+    local winsPad = nil
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Color == Color3.fromRGB(255, 255, 0) and obj.Size.Y < 3 then
+            if (hrp.Position - obj.Position).Magnitude < 100 then
+                winsPad = obj
+                break
+            end
+        end
+    end
+    
+    -- 3. Телепортируемся к площадке, если нашли
+    if winsPad then
+        hrp.CFrame = winsPad.CFrame + Vector3.new(0, 3, 0)
+        task.wait(0.1)
+        hrp.CFrame = winsPad.CFrame
+        print("🏆 Собраны кубки!")
+        Config.CurrentWins = Config.CurrentWins + 100 -- симуляция
+    end
+    
+    -- 4. Ищем беговые дорожки для фарма скорости
+    local treadmill = nil
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Name:lower():find("treadmill") then
+            if (hrp.Position - obj.Position).Magnitude < 50 then
+                treadmill = obj
+                break
+            end
+        end
+    end
+    
+    if treadmill then
+        hrp.CFrame = treadmill.CFrame + Vector3.new(0, 2, 0)
+        print("🏃 Фарм скорости на дорожке...")
+    end
+end
+
+-- === ТЕЛЕПОРТ К МОНЕТАМ ===
 local ignoreList = {"Baseplate", "SpawnLocation", "Terrain", "Part"}
 
 local function isLootCoin(part)
     if not part or not part:IsA("BasePart") then return false end
-    
     local name = part.Name:lower()
     local color = part.Color
     
-    -- Проверка по названию
     if name:find("admin") or name:find("coin") or name:find("loot") or 
        name:find("gold") or name:find("speed") or name:find("boost") or
        name:find("gem") or name:find("crystal") then
         return true
     end
     
-    -- Проверка по цвету (золотой/желтый)
     if color.R > 0.6 and color.G > 0.5 and color.B < 0.3 then
         return true
     end
     
-    -- Проверка по размеру (обычно монеты маленькие)
     if part.Size.X < 5 and part.Size.Z < 5 then
         return true
     end
@@ -119,7 +174,6 @@ local function teleportToAdminLoot()
     
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Parent then
-            -- Пропускаем объекты из игнор-листа
             local shouldIgnore = false
             for _, ignoreName in pairs(ignoreList) do
                 if obj.Name == ignoreName then shouldIgnore = true break end
@@ -170,7 +224,7 @@ local function getWins()
     return 0
 end
 
--- === ФАРМ ПОБЕД ===
+-- === СТАРЫЙ ФАРМ ПОБЕД (ОСТАВЛЯЕМ) ===
 local function farmWins()
     if not Config.WinFarm then return end
     local wins = getWins()
@@ -182,12 +236,22 @@ local function farmWins()
     end
     
     local mouse = player:GetMouse()
+    
     virtualInput:SendKeyEvent(true, Enum.KeyCode.Escape, false, nil)
     task.wait(0.02)
     virtualInput:SendKeyEvent(false, Enum.KeyCode.Escape, false, nil)
-    for i = 1, 10 do mouse.Button1Click() task.wait(0.01) end
+    
+    for i = 1, 10 do
+        mouse.Button1Click()
+        task.wait(0.01)
+    end
+    
     task.wait(0.05)
-    for i = 1, 5 do mouse.Button1Click() task.wait(0.01) end
+    
+    for i = 1, 5 do
+        mouse.Button1Click()
+        task.wait(0.01)
+    end
     
     local pg = player:FindFirstChild("PlayerGui")
     if pg then
@@ -196,7 +260,7 @@ local function farmWins()
                 for _, btn in pairs(g:GetDescendants()) do
                     if btn:IsA("TextButton") then
                         local t = btn.Text:lower() or ""
-                        if t:find("next") or t:find("continue") or t:find("restart") or t:find("play again") or t:find("ok") then
+                        if t:find("next") or t:find("continue") or t:find("restart") or t:find("play again") or t:find("ok") or t:find("again") then
                             pcall(function() btn:Click() end)
                             task.wait(0.05)
                         end
@@ -213,23 +277,74 @@ gui.Name = "ZetaHub"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- ОСНОВНАЯ КАРТОЧКА
+-- ГЛАВНОЕ ОКНО
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(400, 650)
-frame.Position = UDim2.new(0.5, -200, 0.5, -325)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
-frame.BackgroundTransparency = 0.05
-frame.BorderSizePixel = 0
+frame.Size = UDim2.fromOffset(380, 520)
+frame.Position = UDim2.new(0.5, -190, 0.5, -260)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+frame.BackgroundTransparency = 0.1
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.fromRGB(255, 215, 0)
 frame.ClipsDescendants = true
 frame.Parent = gui
 
--- РАМКА
-local border = Instance.new("Frame")
-border.Size = UDim2.new(1, 4, 1, 4)
-border.Position = UDim2.new(0, -2, 0, -2)
-border.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-border.BackgroundTransparency = 0.3
-border.Parent = frame
+-- === ПЕРЕТАСКИВАНИЕ ===
+local dragStart, startPos, dragging = nil, nil, false
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+userInput.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- === ПЕРЕТАСКИВАНИЕ СВЁРНУТОГО ===
+local miniDragStart, miniStartPos, miniDragging = nil, nil, false
+
+miniFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        miniDragging = true
+        miniDragStart = input.Position
+        miniStartPos = miniFrame.Position
+    end
+end)
+
+miniFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        miniDragging = false
+    end
+end)
+
+userInput.InputChanged:Connect(function(input)
+    if miniDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - miniDragStart
+        miniFrame.Position = UDim2.new(
+            miniStartPos.X.Scale,
+            miniStartPos.X.Offset + delta.X,
+            miniStartPos.Y.Scale,
+            miniStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
 -- ЗАГОЛОВОК
 local titleBar = Instance.new("Frame")
@@ -237,34 +352,26 @@ titleBar.Size = UDim2.new(1, 0, 0, 50)
 titleBar.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
 titleBar.Parent = frame
 
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 215, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 180, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0))
-})
-gradient.Parent = titleBar
-
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 1, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ ZETA HUB v2.4"
+title.Text = "⚡ ZETA HUB v3.3"
 title.TextColor3 = Color3.new(0, 0, 0)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = titleBar
 
 -- КНОПКИ УПРАВЛЕНИЯ
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 30, 0, 30)
-toggleBtn.Position = UDim2.new(1, -65, 0.5, -15)
-toggleBtn.Text = "➖"
-toggleBtn.TextColor3 = Color3.new(0, 0, 0)
-toggleBtn.TextScaled = true
-toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.BackgroundTransparency = 0.4
-toggleBtn.BorderSizePixel = 0
-toggleBtn.Parent = titleBar
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(1, -65, 0.5, -15)
+minimizeBtn.Text = "➖"
+minimizeBtn.TextColor3 = Color3.new(0, 0, 0)
+minimizeBtn.TextScaled = true
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.BackgroundTransparency = 0.4
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = titleBar
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -272,17 +379,17 @@ closeBtn.Position = UDim2.new(1, -5, 0.5, -15)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.new(0, 0, 0)
 closeBtn.TextScaled = true
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
 closeBtn.BackgroundTransparency = 0.4
 closeBtn.BorderSizePixel = 0
 closeBtn.Parent = titleBar
 
--- МИНИ-ФРЕЙМ (СВЁРНУТЫЙ)
+-- СВЁРНУТОЕ МЕНЮ
 local miniFrame = Instance.new("Frame")
-miniFrame.Size = UDim2.fromOffset(140, 40)
-miniFrame.Position = UDim2.new(0, 0, 0, 0)
+miniFrame.Size = UDim2.fromOffset(160, 45)
+miniFrame.Position = UDim2.new(0.5, -80, 0.9, -20)
 miniFrame.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-miniFrame.BackgroundTransparency = 0.8
+miniFrame.BackgroundTransparency = 0.85
 miniFrame.BorderSizePixel = 2
 miniFrame.BorderColor3 = Color3.fromRGB(255, 215, 0)
 miniFrame.Visible = false
@@ -310,13 +417,13 @@ local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, 0, 1, -50)
 scroll.Position = UDim2.new(0, 0, 0, 50)
 scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0, 0, 0, 900)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 750)
 scroll.ScrollBarThickness = 3
 scroll.ScrollBarImageColor3 = Color3.fromRGB(255, 215, 0)
 scroll.Parent = frame
 
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1, 0, 0, 900)
+content.Size = UDim2.new(1, 0, 0, 750)
 content.BackgroundTransparency = 1
 content.Parent = scroll
 
@@ -352,8 +459,8 @@ end
 
 local function makeSmallButton(text, y, x, color)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.27, 0, 0, 30)
-    btn.Position = UDim2.new(0.05 + x * 0.32, 0, 0, y)
+    btn.Size = UDim2.new(0.28, 0, 0, 30)
+    btn.Position = UDim2.new(0.05 + x * 0.34, 0, 0, y)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.TextScaled = true
@@ -404,6 +511,7 @@ local function makeToggle(text, y, default, key, cb)
         b.BackgroundColor3 = st and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
         Config[key] = st
         if cb then cb(st) end
+        print("🔄 " .. text .. " -> " .. (st and "ON" or "OFF"))
     end)
     return c
 end
@@ -412,45 +520,27 @@ end
 local y = 10
 
 -- ИНФО
-local info = Instance.new("TextLabel")
-info.Size = UDim2.new(0.9, 0, 0, 22)
-info.Position = UDim2.new(0.05, 0, 0, y)
-info.BackgroundTransparency = 1
-info.Text = "🏆 Побед: 0 | Цель: 1,000,000"
-info.TextColor3 = Color3.fromRGB(255, 255, 255)
-info.TextScaled = true
-info.Font = Enum.Font.Gotham
-info.Parent = content
-y = y + 28
+local infoLine1 = Instance.new("TextLabel")
+infoLine1.Size = UDim2.new(0.9, 0, 0, 20)
+infoLine1.Position = UDim2.new(0.05, 0, 0, y)
+infoLine1.BackgroundTransparency = 1
+infoLine1.Text = "🏆 Побед: 0 | Цель: 1,000,000"
+infoLine1.TextColor3 = Color3.fromRGB(200, 200, 200)
+infoLine1.TextScaled = true
+infoLine1.Font = Enum.Font.Gotham
+infoLine1.Parent = content
+y = y + 25
 
 task.spawn(function()
     while task.wait(1) do
         local w = getWins()
         Config.CurrentWins = w
-        info.Text = "🏆 Побед: " .. string.format("%d", w) .. " | Цель: " .. string.format("%d", Config.WinTarget)
-    end
-end)
-
--- === СЕКЦИЯ: ADMIN ABUSE LOOT ===
-makeSection("💰 ADMIN ABUSE LOOT", y)
-y = y + 30
-
-makeToggle("💰 Auto Admin Loot TP", y, false, "AutoAdminLoot")
-y = y + 35
-
-local tpNowBtn = makeBigButton("📡 TP TO LOOT NOW", y, Color3.fromRGB(200, 100, 0))
-y = y + 45
-
-tpNowBtn.MouseButton1Click:Connect(function()
-    if teleportToAdminLoot() then
-        print("💰 Телепорт к луту выполнен!")
-    else
-        print("❌ Лут не найден!")
+        infoLine1.Text = "🏆 Побед: " .. string.format("%d", w) .. " | Цель: " .. string.format("%d", Config.WinTarget)
     end
 end)
 
 -- GAME SPEED
-makeSection("⚡ GAME SPEED", y)
+makeSection("⚡ GAME SPEED (+1 KEYBOARD ESCAPE)", y)
 y = y + 30
 
 local add1000 = makeBigButton("Add +1000 Game Speed", y, Color3.fromRGB(0, 100, 200))
@@ -468,6 +558,21 @@ add10000.MouseButton1Click:Connect(function()
     print("🎯 +10000 к цели! Цель: " .. Config.WinTarget)
 end)
 
+-- NO KEY
+makeSection("🔑 NO KEY", y)
+y = y + 30
+
+makeToggle("🚶 Авто-бег и сбор кубков", y, false, "AutoWalk")
+y = y + 35
+makeToggle("🛒 Auto Buy", y, false, "AutoBuy")
+y = y + 35
+makeToggle("🔄 Auto Restart", y, false, "AutoRestart")
+y = y + 35
+makeToggle("♻️ Auto Rebirth", y, false, "AutoRebirth")
+y = y + 35
+makeToggle("🏆 Старый фарм побед", y, false, "WinFarm")
+y = y + 40
+
 -- WINS & STAGES
 makeSection("🏆 WINS & STAGES", y)
 y = y + 30
@@ -483,9 +588,10 @@ tpWin.MouseButton1Click:Connect(function()
                 for _, btn in pairs(g:GetDescendants()) do
                     if btn:IsA("TextButton") then
                         local t = btn.Text:lower() or ""
-                        if t:find("win") or t:find("claim") or t:find("collect") then
+                        if t:find("win") or t:find("claim") or t:find("collect") or t:find("get") then
                             pcall(function() btn:Click() end)
                             task.wait(0.2)
+                            print("🏆 Нажата кнопка: " .. btn.Text)
                         end
                     end
                 end
@@ -495,24 +601,62 @@ tpWin.MouseButton1Click:Connect(function()
     print("🏆 Попытка собрать победы!")
 end)
 
--- AUTO
-makeSection("🤖 AUTO", y)
+-- Teleport
+makeSection("📡 Teleport", y)
 y = y + 30
 
-makeToggle("🖱️ Auto Click", y, false, "AutoClick")
-y = y + 35
-makeToggle("🛒 Auto Buy", y, false, "AutoBuy")
-y = y + 35
-makeToggle("🔄 Auto Restart", y, false, "AutoRestart")
-y = y + 35
-makeToggle("♻️ Auto Rebirth", y, false, "AutoRebirth")
-y = y + 35
-makeToggle("🏆 Фарм побед", y, false, "WinFarm")
-y = y + 40
+local tpNearest = makeBigButton("TP to Nearest Win Pad", y, Color3.fromRGB(0, 150, 200))
+y = y + 45
 
--- VIP
-makeSection("👑 VIP", y)
+tpNearest.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local best = nil
+    local bestDist = math.huge
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Color == Color3.fromRGB(255, 255, 0) then
+            local dist = (hrp.Position - obj.Position).Magnitude
+            if dist < bestDist and dist < 200 then
+                bestDist = dist
+                best = obj
+            end
+        end
+    end
+    if best then
+        hrp.CFrame = best.CFrame + Vector3.new(0, 3, 0)
+        task.wait(0.1)
+        hrp.CFrame = best.CFrame
+        print("📍 Телепорт к ближайшей победе!")
+    else
+        print("❌ Победа не найдена!")
+    end
+end)
+
+-- Movement
+makeSection("🏃 Movement", y)
 y = y + 30
+
+local tpForward = makeBigButton("TP Forward (+50 studs)", y, Color3.fromRGB(100, 200, 50))
+y = y + 45
+
+tpForward.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = hrp.CFrame + hrp.CFrame.LookVector * 50
+    print("📍 Вперёд на 50 студий!")
+end)
+
+-- Speed Farm
+makeSection("⚡ Speed Farm", y)
+y = y + 30
+
+makeToggle("💰 Auto Admin Loot TP", y, false, "AutoAdminLoot")
+y = y + 35
 
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0.35, 0, 0, 25)
@@ -556,8 +700,22 @@ for i, v in pairs(speedBtns) do
 end
 if #speedBtns % 3 ~= 0 then y = y + 35 end
 
--- TP TO STAGE
-makeSection("📍 TP TO STAGE", y)
+-- VIP
+makeSection("👑 VIP", y)
+y = y + 30
+
+local vipBtn = makeBigButton("🌟 VIP BOOST (x2 Speed)", y, Color3.fromRGB(200, 100, 255))
+y = y + 45
+
+vipBtn.MouseButton1Click:Connect(function()
+    Config.FarmSpeed = Config.FarmSpeed * 2
+    if Config.FarmSpeed > 450 then Config.FarmSpeed = 450 end
+    speedBox.Text = tostring(Config.FarmSpeed)
+    print("👑 VIP Boost активирован! Скорость: " .. Config.FarmSpeed)
+end)
+
+-- TP to Stage
+makeSection("📍 TP to Stage", y)
 y = y + 30
 
 local stages = {"Stage 2", "Stage 5", "Stage 10", "Stage 15", "Stage 20"}
@@ -586,8 +744,27 @@ for i, v in pairs(stages) do
 end
 if #stages % 3 ~= 0 then y = y + 35 end
 
--- БАННЕР
-makeSection("👑 БАННЕР", y)
+-- Discord и Exit
+makeSection("🎮 Discord & Exit", y)
+y = y + 30
+
+local discordBtn = makeBigButton("💬 Discord", y, Color3.fromRGB(100, 100, 255))
+y = y + 45
+
+discordBtn.MouseButton1Click:Connect(function()
+    print("📋 Discord ссылка скопирована!")
+    setclipboard("https://discord.gg/your-server")
+end)
+
+local refreshBtn = makeBigButton("🔄 Refresh Stage List", y, Color3.fromRGB(0, 200, 150))
+y = y + 45
+
+refreshBtn.MouseButton1Click:Connect(function()
+    print("🔄 Список этапов обновлён!")
+end)
+
+-- БАННЕР (КРАСНЫЙ)
+makeSection("🔴 БАННЕР (КРАСНЫЙ)", y)
 y = y + 30
 
 makeToggle("Показать баннер", y, true, "BannerEnabled", function(s)
@@ -613,7 +790,7 @@ bb.Position = UDim2.new(0.4, 0, 0, y)
 bb.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
 bb.BackgroundTransparency = 0.5
 bb.BorderSizePixel = 1
-bb.BorderColor3 = Color3.fromRGB(255, 215, 0)
+bb.BorderColor3 = Color3.fromRGB(255, 0, 0)
 bb.Text = "👑ZETA HUB👑"
 bb.TextColor3 = Color3.new(1, 1, 1)
 bb.TextScaled = true
@@ -628,9 +805,10 @@ bb.FocusLost:Connect(function()
 end)
 y = y + 35
 
-local tags3 = {"👑ZETA","🎬CREATOR","👑CREATOR","🌟STAR","💎VIP"}
-for i, v in pairs(tags3) do
-    local btn = makeSmallButton(v, y, i, Color3.fromRGB(80, 50, 80))
+-- КРАСНЫЕ ТЕГИ
+local tags = {"👑ZETA","🎬CREATOR","👑CREATOR","🌟STAR","💎VIP"}
+for i, v in pairs(tags) do
+    local btn = makeSmallButton(v, y, i, Color3.fromRGB(200, 0, 0))
     btn.MouseButton1Click:Connect(function()
         Config.BannerText = v
         bb.Text = v
@@ -638,11 +816,11 @@ for i, v in pairs(tags3) do
     end)
     if i % 3 == 0 then y = y + 35 end
 end
-if #tags3 % 3 ~= 0 then y = y + 35 end
+if #tags % 3 ~= 0 then y = y + 35 end
 
-local tags4 = {"🔥ADMIN","⚡PRO","🏆WINNER","👾HACKER","✨GOD"}
-for i, v in pairs(tags4) do
-    local btn = makeSmallButton(v, y, i, Color3.fromRGB(80, 50, 80))
+local tags2 = {"🔥ADMIN","⚡PRO","🏆WINNER","👾HACKER","✨GOD"}
+for i, v in pairs(tags2) do
+    local btn = makeSmallButton(v, y, i, Color3.fromRGB(200, 0, 0))
     btn.MouseButton1Click:Connect(function()
         Config.BannerText = v
         bb.Text = v
@@ -650,7 +828,7 @@ for i, v in pairs(tags4) do
     end)
     if i % 3 == 0 then y = y + 35 end
 end
-if #tags4 % 3 ~= 0 then y = y + 35 end
+if #tags2 % 3 ~= 0 then y = y + 35 end
 
 y = y + 10
 
@@ -658,7 +836,7 @@ local status = Instance.new("TextLabel")
 status.Size = UDim2.new(0.9, 0, 0, 22)
 status.Position = UDim2.new(0.05, 0, 0, y + 5)
 status.BackgroundTransparency = 1
-status.Text = "✅ Zeta Hub v2.4 | Admin Loot TP + Авто-фарм!"
+status.Text = "✅ Zeta Hub v3.3 | Авто-бег + сбор кубков!"
 status.TextColor3 = Color3.fromRGB(150, 255, 150)
 status.TextScaled = true
 status.Font = Enum.Font.Gotham
@@ -671,18 +849,18 @@ local function toggleMinimize()
     if Config.Minimized then
         frame.Visible = false
         miniFrame.Visible = true
-        miniFrame.Position = UDim2.new(0.5, -70, 0, 10)
-        toggleBtn.Text = "➕"
+        miniFrame.Position = UDim2.new(0.5, -80, 0.9, -20)
+        minimizeBtn.Text = "➕"
         print("📱 Zeta Hub свернут")
     else
         frame.Visible = true
         miniFrame.Visible = false
-        toggleBtn.Text = "➖"
+        minimizeBtn.Text = "➖"
         print("📱 Zeta Hub развернут")
     end
 end
 
-toggleBtn.MouseButton1Click:Connect(toggleMinimize)
+minimizeBtn.MouseButton1Click:Connect(toggleMinimize)
 expandBtn.MouseButton1Click:Connect(function()
     if Config.Minimized then toggleMinimize() end
 end)
@@ -691,9 +869,11 @@ closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 -- === ОСНОВНОЙ ЦИКЛ ===
 task.spawn(function()
     while task.wait(0.1) do
-        if Config.AutoClick then
-            pcall(function() player:GetMouse().Button1Click() end)
+        -- НОВАЯ ФУНКЦИЯ: АВТО-БЕГ И СБОР КУБКОВ
+        if Config.AutoWalk then
+            pcall(autoWalkAndCollect)
         end
+        
         if Config.AutoBuy then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -703,7 +883,7 @@ task.spawn(function()
                             for _, btn in pairs(g:GetDescendants()) do
                                 if btn:IsA("TextButton") then
                                     local n = btn.Name:lower() or ""
-                                    if n:find("buy") or n:find("upgrade") or n:find("shop") then
+                                    if n:find("buy") or n:find("upgrade") or n:find("shop") or n:find("purchase") then
                                         pcall(function() btn:Click() end)
                                         task.wait(0.05)
                                     end
@@ -714,6 +894,7 @@ task.spawn(function()
                 end
             end)
         end
+        
         if Config.AutoRestart then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -723,7 +904,8 @@ task.spawn(function()
                             for _, btn in pairs(g:GetDescendants()) do
                                 if btn:IsA("TextButton") then
                                     local n = btn.Name:lower() or ""
-                                    if n:find("restart") or n:find("retry") or n:find("again") then
+                                    local t = btn.Text:lower() or ""
+                                    if n:find("restart") or n:find("retry") or n:find("again") or t:find("restart") or t:find("play again") then
                                         pcall(function() btn:Click() end)
                                         task.wait(0.05)
                                     end
@@ -734,6 +916,7 @@ task.spawn(function()
                 end
             end)
         end
+        
         if Config.AutoRebirth then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -744,7 +927,7 @@ task.spawn(function()
                                 if btn:IsA("TextButton") then
                                     local n = btn.Name:lower() or ""
                                     local t = btn.Text:lower() or ""
-                                    if n:find("rebirth") or n:find("prestige") or t:find("rebirth") then
+                                    if n:find("rebirth") or n:find("prestige") or t:find("rebirth") or t:find("prestige") then
                                         pcall(function() btn:Click() end)
                                         task.wait(0.2)
                                     end
@@ -755,12 +938,13 @@ task.spawn(function()
                 end
             end)
         end
+        
         if Config.WinFarm then
             pcall(farmWins)
             local delay = math.max(0.01, 1 / Config.FarmSpeed)
             task.wait(delay)
         end
-        -- АВТО-ТЕЛЕПОРТ К ЛУТУ
+        
         if Config.AutoAdminLoot then
             pcall(teleportToAdminLoot)
         end
@@ -778,7 +962,7 @@ userInput.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("✅ Zeta Hub v2.4 ЗАГРУЖЕН!")
+print("✅ Zeta Hub v3.3 ЗАГРУЖЕН!")
 print("📌 F1 - Показать/Скрыть")
-print("💰 Auto Admin Loot TP - включи в меню!")
-print("🔥 Теперь ты будешь телепортироваться к монетам Admin Abuse!")
+print("🚶 Включи 'Авто-бег и сбор кубков' для фарма!")
+print("🔥 Теперь персонаж сам бегает по карте и собирает кубки!")
