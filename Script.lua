@@ -1,3 +1,7 @@
+-- Zeta Hub v5.1 - СВЁРНУТОЕ МЕНЮ (как Pulse Hub)
+-- Для игры: +1 Speed Keyboard Escape
+-- Вставь в Xeno Executor и нажми Execute
+
 print("🔥 Zeta Hub v5.1 ЗАПУСК...")
 
 task.wait(2)
@@ -16,7 +20,7 @@ print("✅ Игрок: " .. player.Name)
 
 -- === НАСТРОЙКИ ===
 local Config = {
-    Minimized = false
+    Minimized = true  -- Сразу свёрнутое
 }
 
 -- === СОЗДАНИЕ GUI ===
@@ -36,7 +40,7 @@ miniFrame.BorderColor3 = Color3.fromRGB(255, 215, 0)
 miniFrame.Visible = true
 miniFrame.Parent = gui
 
--- ТЕКСТ НА СВЁРНУТОМ МЕНЮ
+-- ТЕКСТ НА СВЁРНУТОМ
 local miniText = Instance.new("TextLabel")
 miniText.Size = UDim2.new(1, 0, 1, 0)
 miniText.BackgroundTransparency = 1
@@ -48,7 +52,7 @@ miniText.TextStrokeTransparency = 0.3
 miniText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 miniText.Parent = miniFrame
 
--- КНОПКА ДЛЯ РАЗВОРАЧИВАНИЯ
+-- КНОПКА РАЗВЕРНУТЬ
 local expandBtn = Instance.new("TextButton")
 expandBtn.Size = UDim2.new(1, 0, 1, 0)
 expandBtn.BackgroundTransparency = 1
@@ -118,7 +122,7 @@ infoText.TextScaled = true
 infoText.Font = Enum.Font.GothamBold
 infoText.Parent = frame
 
--- КОНТЕЙНЕР
+-- СКРОЛЛ
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, 0, 1, -90)
 scroll.Position = UDim2.new(0, 0, 0, 90)
@@ -327,7 +331,7 @@ footer2.TextScaled = true
 footer2.Font = Enum.Font.Gotham
 footer2.Parent = frame
 
--- === ПЕРЕТАСКИВАНИЕ ===
+-- === ПЕРЕТАСКИВАНИЕ РАЗВЁРНУТОГО ===
 local dragStart, startPos, dragging = nil, nil, false
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -377,7 +381,6 @@ local function toggleMinimize()
         frame.Visible = false
         miniFrame.Visible = true
         minimizeBtn.Text = "➕"
-        miniFrame.Position = UDim2.new(0.5, -80, 0.9, -20)
     else
         frame.Visible = true
         miniFrame.Visible = false
@@ -412,6 +415,7 @@ defaultsBtn.MouseButton1Click:Connect(function()
     print("✅ Defaults: 1")
 end)
 
+-- === ГОРЯЧИЕ КЛАВИШИ ===
 userInput.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.F1 then 
