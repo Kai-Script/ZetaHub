@@ -1,10 +1,6 @@
--- Zeta Hub v1.8 - ПОЛНАЯ ВЕРСИЯ (РАБОЧАЯ)
--- Для игры: +1 Speed Keyboard Escape
--- Вставь в Xeno Executor и нажми Execute
+print("🔥 Zeta Hub v1.8.5 ЗАПУСК...")
 
-print("🔥 Zeta Hub v1.8 ЗАПУСК...")
-
-task.wait(3)
+task.wait(2)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -37,19 +33,13 @@ local Config = {
     BannerEnabled = true
 }
 
--- === БАННЕР НАД СКИНОМ ===
+-- === БАННЕР ===
 local banner = nil
 local function updateBanner()
     local char = player.Character
     if not char then return end
-    
-    if banner then 
-        pcall(function() banner:Destroy() end)
-        banner = nil
-    end
-    
+    if banner then pcall(function() banner:Destroy() end) banner = nil end
     if not Config.BannerEnabled then return end
-    
     local head = char:FindFirstChild("Head")
     if not head then return end
     
@@ -89,12 +79,9 @@ local function updateBanner()
     txt.Parent = banner
 end
 
-player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    updateBanner()
-end)
+player.CharacterAdded:Connect(function() task.wait(0.5) updateBanner() end)
 
--- === ОТКЛЮЧЕНИЕ ЭФФЕКТОВ ===
+-- === ЭФФЕКТЫ ===
 local function toggleEffects(on)
     if on then
         for _, v in pairs(workspace:GetDescendants()) do
@@ -104,7 +91,6 @@ local function toggleEffects(on)
         end
         lighting.GlobalShadows = false
         lighting.Brightness = 0.5
-        print("🛑 Эффекты отключены")
     else
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") or v:IsA("Trail") then
@@ -113,11 +99,10 @@ local function toggleEffects(on)
         end
         lighting.GlobalShadows = true
         lighting.Brightness = 2
-        print("✅ Эффекты включены")
     end
 end
 
--- === ПОЛУЧЕНИЕ ПОБЕД ===
+-- === ПОБЕДЫ ===
 local function getWins()
     local pg = player:FindFirstChild("PlayerGui")
     if not pg then return 0 end
@@ -140,13 +125,11 @@ local function getWins()
     return 0
 end
 
--- === ФАРМ ПОБЕД ===
+-- === ФАРМ ===
 local function farmWins()
     if not Config.WinFarm then return end
-    
     local wins = getWins()
     Config.CurrentWins = wins
-    
     if wins >= Config.WinTarget then
         print("🏆 Цель достигнута!")
         Config.WinFarm = false
@@ -154,26 +137,13 @@ local function farmWins()
     end
     
     local mouse = player:GetMouse()
-    
-    -- ESCAPE
     virtualInput:SendKeyEvent(true, Enum.KeyCode.Escape, false, nil)
     task.wait(0.02)
     virtualInput:SendKeyEvent(false, Enum.KeyCode.Escape, false, nil)
-    
-    -- Клики
-    for i = 1, 10 do
-        mouse.Button1Click()
-        task.wait(0.01)
-    end
-    
+    for i = 1, 10 do mouse.Button1Click() task.wait(0.01) end
     task.wait(0.05)
+    for i = 1, 5 do mouse.Button1Click() task.wait(0.01) end
     
-    for i = 1, 5 do
-        mouse.Button1Click()
-        task.wait(0.01)
-    end
-    
-    -- Авто-нажатие кнопок
     local pg = player:FindFirstChild("PlayerGui")
     if pg then
         for _, g in pairs(pg:GetChildren()) do
@@ -234,14 +204,13 @@ local ver = Instance.new("TextLabel")
 ver.Size = UDim2.new(0.2, 0, 1, 0)
 ver.Position = UDim2.new(0.8, 0, 0, 0)
 ver.BackgroundTransparency = 1
-ver.Text = "v1.8"
+ver.Text = "v1.8.5"
 ver.TextColor3 = Color3.new(0, 0, 0)
 ver.TextScaled = true
 ver.TextXAlignment = Enum.TextXAlignment.Right
 ver.Font = Enum.Font.Gotham
 ver.Parent = titleBar
 
--- КНОПКИ УПРАВЛЕНИЯ
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 25, 0, 25)
 toggleBtn.Position = UDim2.new(1, -55, 0.5, -12.5)
@@ -264,7 +233,6 @@ closeBtn.BackgroundTransparency = 0.5
 closeBtn.BorderSizePixel = 0
 closeBtn.Parent = titleBar
 
--- СКРОЛЛ
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, 0, 1, -40)
 scroll.Position = UDim2.new(0, 0, 0, 40)
@@ -279,7 +247,7 @@ content.Size = UDim2.new(1, 0, 0, 820)
 content.BackgroundTransparency = 1
 content.Parent = scroll
 
--- === ФУНКЦИИ ===
+-- === УТИЛИТЫ ===
 local function makeTitle(t, y)
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(0.9, 0, 0, 22)
@@ -333,7 +301,6 @@ local function makeToggle(text, y, default, key, cb)
         Config[key] = st
         if cb then cb(st) end
     end)
-    
     return c
 end
 
@@ -363,7 +330,6 @@ local function makeTagButton(text, value, x, y)
     b.BorderSizePixel = 1
     b.BorderColor3 = Color3.fromRGB(255, 200, 50)
     b.Parent = content
-    
     b.MouseButton1Click:Connect(function()
         Config.BannerText = value
         updateBanner()
@@ -383,7 +349,6 @@ local function makeSpeedButton(text, value, x, y)
     b.BorderSizePixel = 1
     b.BorderColor3 = Color3.fromRGB(255, 200, 50)
     b.Parent = content
-    
     b.MouseButton1Click:Connect(function()
         Config.FarmSpeed = value
     end)
@@ -402,7 +367,6 @@ local function makeTargetButton(text, value, x, y)
     b.BorderSizePixel = 1
     b.BorderColor3 = Color3.fromRGB(255, 200, 50)
     b.Parent = content
-    
     b.MouseButton1Click:Connect(function()
         Config.WinTarget = value
     end)
@@ -438,11 +402,7 @@ end)
 -- БАННЕР
 makeTitle("👑 БАННЕР НАД СКИНОМ", y)
 y = y + 28
-
-makeToggle("Показать баннер", y, true, "BannerEnabled", function(s)
-    Config.BannerEnabled = s
-    updateBanner()
-end)
+makeToggle("Показать баннер", y, true, "BannerEnabled", function(s) Config.BannerEnabled = s updateBanner() end)
 y = y + 33
 
 local bl = Instance.new("TextLabel")
@@ -468,54 +428,31 @@ bb.TextColor3 = Color3.new(1, 1, 1)
 bb.TextScaled = true
 bb.Font = Enum.Font.Gotham
 bb.Parent = content
-
 bb.FocusLost:Connect(function()
     if bb.Text and bb.Text ~= "" then
         Config.BannerText = bb.Text
         updateBanner()
     end
 end)
-
 y = y + 33
 
-local tags = {
-    {"👑ZETA HUB👑", "👑ZETA HUB👑"},
-    {"🎬CONTENT CREATOR", "🎬CONTENT CREATOR"},
-    {"👑CREATOR👑", "👑CREATOR👑"},
-    {"🌟STAR🌟", "🌟STAR🌟"},
-    {"💎VIP💎", "💎VIP💎"}
-}
-for i, v in pairs(tags) do
-    makeTagButton(v[1], v[2], i-1, y)
-end
+local tags = {{"👑ZETA HUB👑","👑ZETA HUB👑"},{"🎬CONTENT CREATOR","🎬CONTENT CREATOR"},{"👑CREATOR👑","👑CREATOR👑"},{"🌟STAR🌟","🌟STAR🌟"},{"💎VIP💎","💎VIP💎"}}
+for i, v in pairs(tags) do makeTagButton(v[1], v[2], i-1, y) end
 y = y + 33
 
-local tags2 = {
-    {"🔥ADMIN🔥", "🔥ADMIN🔥"},
-    {"⚡PRO⚡", "⚡PRO⚡"},
-    {"🏆WINNER🏆", "🏆WINNER🏆"},
-    {"👾HACKER👾", "👾HACKER👾"},
-    {"✨GOD✨", "✨GOD✨"}
-}
-for i, v in pairs(tags2) do
-    makeTagButton(v[1], v[2], i-1, y)
-end
+local tags2 = {{"🔥ADMIN🔥","🔥ADMIN🔥"},{"⚡PRO⚡","⚡PRO⚡"},{"🏆WINNER🏆","🏆WINNER🏆"},{"👾HACKER👾","👾HACKER👾"},{"✨GOD✨","✨GOD✨"}}
+for i, v in pairs(tags2) do makeTagButton(v[1], v[2], i-1, y) end
 y = y + 40
 
 -- ЭФФЕКТЫ
 makeTitle("🛡️ АДМИН-АБЬЮЗ", y)
 y = y + 28
-
-makeToggle("Отключить эффекты", y, false, "DisableEffects", function(s)
-    Config.DisableEffects = s
-    toggleEffects(s)
-end)
+makeToggle("Отключить эффекты", y, false, "DisableEffects", function(s) Config.DisableEffects = s toggleEffects(s) end)
 y = y + 40
 
 -- АВТО-ФАРМ
 makeTitle("🤖 АВТО-ФАРМ", y)
 y = y + 28
-
 makeToggle("⌨️ Auto Escape", y, false, "AutoEscape")
 y = y + 33
 makeToggle("🖱️ Auto Click", y, false, "AutoClick")
@@ -530,7 +467,6 @@ y = y + 40
 -- ФАРМ ПОБЕД
 makeTitle("🏆 ФАРМ ПОБЕД", y)
 y = y + 28
-
 makeToggle("Фарм побед", y, false, "WinFarm")
 y = y + 33
 
@@ -557,12 +493,10 @@ tb.TextColor3 = Color3.new(1, 1, 1)
 tb.TextScaled = true
 tb.Font = Enum.Font.Gotham
 tb.Parent = content
-
 tb.FocusLost:Connect(function()
     local n = tonumber(tb.Text)
     if n and n > 0 then Config.WinTarget = n end
 end)
-
 y = y + 33
 
 local sl = Instance.new("TextLabel")
@@ -588,36 +522,27 @@ sb.TextColor3 = Color3.new(1, 1, 1)
 sb.TextScaled = true
 sb.Font = Enum.Font.Gotham
 sb.Parent = content
-
 sb.FocusLost:Connect(function()
     local n = tonumber(sb.Text)
     if n and n >= 1 and n <= 450 then Config.FarmSpeed = n end
 end)
-
 y = y + 33
 
 local speeds = {{"1",1},{"10",10},{"25",25},{"50",50},{"100",100},{"150",150},{"250",250},{"450",450}}
-for i, v in pairs(speeds) do
-    makeSpeedButton(v[1], v[2], i-1, y)
-end
+for i, v in pairs(speeds) do makeSpeedButton(v[1], v[2], i-1, y) end
 y = y + 33
 
 local targets = {{"1M",1000000},{"1.5M",1500000},{"2.5M",2500000},{"4M",4000000},{"6M",6000000}}
-for i, v in pairs(targets) do
-    makeTargetButton(v[1], v[2], i-1, y)
-end
+for i, v in pairs(targets) do makeTargetButton(v[1], v[2], i-1, y) end
 y = y + 33
 
 local targets2 = {{"10M",10000000},{"15M",15000000},{"16M",16000000},{"25M",25000000},{"40M",40000000}}
-for i, v in pairs(targets2) do
-    makeTargetButton(v[1], v[2], i-1, y)
-end
+for i, v in pairs(targets2) do makeTargetButton(v[1], v[2], i-1, y) end
 y = y + 40
 
 -- БЫСТРЫЕ ДЕЙСТВИЯ
 makeTitle("⚡ БЫСТРЫЕ ДЕЙСТВИЯ", y)
 y = y + 28
-
 local speedBtn = makeButton("⚡ Speed Boost", y, Color3.fromRGB(0, 150, 255))
 y = y + 36
 local jumpBtn = makeButton("🦘 Super Jump", y, Color3.fromRGB(255, 150, 0))
@@ -629,7 +554,7 @@ local status = Instance.new("TextLabel")
 status.Size = UDim2.new(0.9, 0, 0, 22)
 status.Position = UDim2.new(0.05, 0, 0, y + 5)
 status.BackgroundTransparency = 1
-status.Text = "✅ Zeta Hub v1.8 | Баннер над скином!"
+status.Text = "✅ Zeta Hub v1.8.5 | Баннер над скином!"
 status.TextColor3 = Color3.fromRGB(150, 255, 150)
 status.TextScaled = true
 status.Font = Enum.Font.Gotham
@@ -638,7 +563,6 @@ status.Parent = content
 -- === ОСНОВНОЙ ЦИКЛ ===
 task.spawn(function()
     while task.wait(0.1) do
-        -- Auto Escape
         if Config.AutoEscape then
             pcall(function()
                 virtualInput:SendKeyEvent(true, Enum.KeyCode.Escape, false, nil)
@@ -646,15 +570,9 @@ task.spawn(function()
                 virtualInput:SendKeyEvent(false, Enum.KeyCode.Escape, false, nil)
             end)
         end
-        
-        -- Auto Click
         if Config.AutoClick then
-            pcall(function()
-                player:GetMouse().Button1Click()
-            end)
+            pcall(function() player:GetMouse().Button1Click() end)
         end
-        
-        -- Auto Buy
         if Config.AutoBuy then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -675,8 +593,6 @@ task.spawn(function()
                 end
             end)
         end
-        
-        -- Auto Restart
         if Config.AutoRestart then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -697,8 +613,6 @@ task.spawn(function()
                 end
             end)
         end
-        
-        -- Auto Rebirth
         if Config.AutoRebirth then
             pcall(function()
                 local pg = player:FindFirstChild("PlayerGui")
@@ -720,8 +634,6 @@ task.spawn(function()
                 end
             end)
         end
-        
-        -- Фарм побед
         if Config.WinFarm then
             pcall(farmWins)
             local delay = math.max(0.01, 1 / Config.FarmSpeed)
@@ -774,7 +686,6 @@ rebirthBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- БАННЕР ПРИ ЗАПУСКЕ
 task.wait(0.5)
 updateBanner()
 
@@ -790,20 +701,13 @@ toggleBtn.MouseButton1Click:Connect(function()
     frame.Position = minimized and UDim2.new(0.5, -210, 0, 10) or UDim2.new(0.5, -210, 0.5, -310)
 end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
+closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
 userInput.InputBegan:Connect(function(input, processed)
     if processed then return end
-    if input.KeyCode == Enum.KeyCode.F1 then
-        gui.Enabled = not gui.Enabled
-    end
+    if input.KeyCode == Enum.KeyCode.F1 then gui.Enabled = not gui.Enabled end
 end)
 
-print("✅ Zeta Hub v1.8 ЗАГРУЖЕН!")
+print("✅ Zeta Hub v1.8.5 ЗАГРУЖЕН!")
 print("📌 F1 - Показать/Скрыть")
 print("👑 Баннер: " .. Config.BannerText)
-print("🛡️ Отключение эффектов - в меню!")
-```
-
