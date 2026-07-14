@@ -1,4 +1,3 @@
-
 print("🔥 Zeta Hub v5.1 ЗАПУСК...")
 
 task.wait(2)
