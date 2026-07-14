@@ -1,10 +1,8 @@
--- Zeta Hub v6.0 - КАК SPECTRUM HUB
+-- Zeta Hub v6.0 - КАК SPECTRUM HUB (FIXED)
 -- Для игры: +1 Speed Keyboard Escape
 -- Вставь в Xeno Executor и нажми Execute
 
 print("🔥 Zeta Hub v6.0 ЗАПУСК...")
-
-task.wait(3)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -15,17 +13,43 @@ if not player then
     return
 end
 
-print("✅ Игрок: " .. player.Name)
+-- === ЖДЕМ ПОЛНОЙ ЗАГРУЗКИ ИГРОКА ===
+repeat task.wait() until player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+print("✅ Игрок загружен: " .. player.Name)
 
 -- === УДАЛЯЕМ СТАРЫЙ GUI ===
 local oldGui = player.PlayerGui:FindFirstChild("ZetaHub")
-if oldGui then oldGui:Destroy() end
+if oldGui then 
+    oldGui:Destroy() 
+    print("✅ Старый GUI удален")
+end
 
 -- === СОЗДАНИЕ GUI ===
 local gui = Instance.new("ScreenGui")
 gui.Name = "ZetaHub"
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Enabled = true
+
+-- ЖДЕМ PlayerGui
+local playerGui = player:WaitForChild("PlayerGui", 5)
+if not playerGui then
+    print("❌ PlayerGui не найден!")
+    return
+end
+
+gui.Parent = playerGui
+print("✅ GUI создан!")
+
+-- === ТЕСТОВАЯ КНОПКА ДЛЯ ПРОВЕРКИ (исчезнет через 2 сек) ===
+local testBtn = Instance.new("TextButton")
+testBtn.Size = UDim2.new(0, 200, 0, 50)
+testBtn.Position = UDim2.new(0.5, -100, 0.5, -25)
+testBtn.Text = "✅ GUI РАБОТАЕТ!"
+testBtn.TextColor3 = Color3.new(1, 1, 1)
+testBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+testBtn.Parent = gui
+task.wait(2)
+testBtn:Destroy()
 
 -- === СВЁРНУТОЕ МЕНЮ ===
 local miniFrame = Instance.new("Frame")
@@ -418,6 +442,18 @@ userInput.InputBegan:Connect(function(input, processed)
         gui.Enabled = not gui.Enabled 
     end
 end)
+
+-- === ДИАГНОСТИКА ===
+task.wait(1)
+print("=== ДИАГНОСТИКА GUI ===")
+print("✅ GUI существует:", gui ~= nil)
+print("✅ GUI Enabled:", gui.Enabled)
+print("✅ GUI Parent:", gui.Parent)
+print("✅ GUI Parent.Name:", gui.Parent and gui.Parent.Name or "НЕТ")
+print("✅ Все дети GUI:")
+for _, child in ipairs(gui:GetChildren()) do
+    print("   -", child.Name, child.ClassName)
+end
 
 print("✅ Zeta Hub v6.0 ЗАГРУЖЕН!")
 print("📌 F1 - Показать/Скрыть")
